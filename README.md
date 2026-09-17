@@ -22,6 +22,7 @@ Tkinter GUI.
 - [Project structure](#project-structure)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Training](#training)
 - [Model details](#model-details)
 - [Logging](#logging)
 - [Snapshots](#snapshots)
@@ -124,11 +125,10 @@ EmotionDetect/
 > isn't needed to *run* the app, since the trained model (`emotion_model.h5`)
 > is already included.
 
-> **About `train.py`:** the file currently in this repo is a placeholder and
-> does not yet contain the actual model-training pipeline used to produce
-> `emotion_model.h5`. A proper training script (data loading from `dataset/`,
-> CNN architecture, training loop, and export to `.h5`) is on the
-> [roadmap](#roadmap).
+> **About `train.py`:** trains a CNN from scratch on `dataset/train` and
+> `dataset/test` (grayscale 48×48 crops, `angry`/`happy`/`sad` folders) and
+> saves the result as an `.h5` model compatible with `detect_gui.py`. See
+> [Training](#training) below.
 
 ## Installation
 
@@ -166,6 +166,33 @@ python detect_gui.py
 
 The footer shows status messages (e.g. snapshot saved) and the path to the
 active log file.
+
+## Training
+
+`train.py` retrains the CNN from scratch using the images in `dataset/train`
+and `dataset/test` (not included in this repo — see the note above).
+
+```bash
+python train.py                                # default: 40 epochs, batch size 64
+python train.py --epochs 25 --batch-size 32
+python train.py --output emotion_model.h5      # overwrite the shipped model directly
+```
+
+By default the trained model is saved to `emotion_model_trained.h5` (not
+`emotion_model.h5`) so a training run never silently overwrites the working
+demo model — copy/rename it yourself once you're happy with the result, or
+pass `--output emotion_model.h5` to replace it directly.
+
+Key details:
+
+- Class imbalance (train set: ~1.1k *angry* vs. ~7.2k *happy* vs. ~4.8k *sad*)
+  is corrected with computed `class_weight`s.
+- Data augmentation (random flip/rotation/zoom) is applied only at train time.
+- `EarlyStopping` + `ReduceLROnPlateau` avoid overfitting and stop training
+  once validation accuracy plateaus.
+- Per-epoch metrics are written to `logs/training_history.csv`.
+- Training runs on CPU by default (no CUDA/DirectML setup required) — a full
+  run takes roughly a few minutes per epoch on a typical laptop CPU.
 
 ## Model details
 
@@ -223,7 +250,7 @@ burned in).
 
 ## Roadmap
 
-- [ ] Add a real `train.py` pipeline (load `dataset/`, train, evaluate, export)
+- [x] Add a real `train.py` pipeline (load `dataset/`, train, evaluate, export)
 - [ ] Expand to more emotion classes (Neutral, Surprise, Fear, Disgust)
 - [ ] Swap Haar Cascade for a DNN-based face detector for better accuracy
 - [ ] Add a session summary/report view (charts from `logs/emotion_log.csv`)
