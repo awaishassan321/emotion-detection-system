@@ -1,0 +1,23 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Dataset (large, not tracked — see README for source)
+dataset/
+
+# Runtime artifacts
+logs/*.csv
+!logs/.gitkeep
+snapshots/*
+!snapshots/.gitkeep
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
